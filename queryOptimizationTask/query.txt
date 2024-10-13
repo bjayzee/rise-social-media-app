@@ -1,0 +1,41 @@
+## Performance Challenge: Fetch the top 3 users with the most posts and, 
+    for each of those users, the latest comment they made. This should be achieved with efficient querying.
+
+SELECT 
+    u.id AS userId,
+    u.name AS userName,
+    COUNT(p.id) AS postCount,
+    c.id AS commentId,
+    c.content AS latestCommentContent,
+    c.createdAt AS latestCommentCreatedAt
+FROM users u
+JOIN posts p ON u.id = p.userId
+LEFT JOIN comments c ON p.id = c.postId
+WHERE c.createdAt = (
+    SELECT MAX(c2.createdAt) 
+    FROM comments c2 
+    WHERE c2.postId = p.id
+)
+GROUP BY u.id, c.id
+ORDER BY postCount DESC
+LIMIT 3;
+
+
+2. Query Optimization Task:
+
+SELECT u.id AS userId, u.name, latest_comment.content, post_counts.postCount
+FROM users u
+JOIN (
+    SELECT userId, COUNT(*) AS postCount
+    FROM posts
+    GROUP BY userId
+) post_counts ON u.id = post_counts.userId
+LEFT JOIN LATERAL (
+    SELECT content
+    FROM comments c
+    WHERE c.userId = u.id
+    ORDER BY c.createdAt DESC
+    LIMIT 1
+) latest_comment ON true
+ORDER BY post_counts.postCount DESC
+LIMIT 3;
